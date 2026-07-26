@@ -1,0 +1,13 @@
+node_modules/
+npm-debug.log
+.DS_Store
+data/products.json
+data/test-products.json
+
+# Prevenir exposición accidental de secretos locales
+.env
+.env.*
+*.pem
+*.key
+*.secret
+

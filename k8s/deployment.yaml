@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventario-app-stable
+  labels:
+    app: inventario-app
+    version: v1
+    track: stable
+spec:
+  replicas: 4
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: inventario-app
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: inventario-app
+        version: v1
+        track: stable
+        color: blue
+    spec:
+      containers:
+        - name: inventario-app
+          image: inventario-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: APP_VERSION
+              value: "v1"
+            - name: APP_COLOR
+              value: "blue"
+            - name: STARTUP_DELAY_SECONDS
+              value: "15" # Componente Adicional 2: Simulación de arranque lento (15s)
+            - name: API_KEY
+              valueFrom: # Componente Adicional 1: Inyección de Secret
+                secretKeyRef:
+                  name: inventario-secrets
+                  key: API_KEY
+          # ------------------------------------------------------------------
+          # Probes de Kubernetes tolerantes a Arranque Lento (Slow Startup)
+          # ------------------------------------------------------------------
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 2
+            periodSeconds: 3
+            failureThreshold: 10 # Permite 30s max para inicialización completa antes de matar el pod
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 5 # Tolera 25s de intentos fallidos antes de sacar del balanceador
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 3

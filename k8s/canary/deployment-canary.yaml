@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventario-app-canary
+  labels:
+    app: inventario-app
+    version: v2
+    track: canary
+spec:
+  replicas: 1 # 1 pod Canary vs 4 pods Stable = 20% tráfico Canary / 80% Stable
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: inventario-app
+      track: canary
+  template:
+    metadata:
+      labels:
+        app: inventario-app
+        version: v2
+        track: canary
+        color: green
+    spec:
+      containers:
+        - name: inventario-app
+          image: inventario-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: APP_VERSION
+              value: "v2"
+            - name: APP_COLOR
+              value: "green"
+            - name: STARTUP_DELAY_SECONDS
+              value: "15"
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: inventario-secrets
+                  key: API_KEY
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 2
+            periodSeconds: 3
+            failureThreshold: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 3
