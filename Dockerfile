@@ -7,7 +7,7 @@
 # ------------------------------------------------------------------------------
 # Stage 1: Build and Unit Testing
 # ------------------------------------------------------------------------------
-FROM node:18-alpine AS builder
+FROM node:alpine AS builder
 
 WORKDIR /app
 
@@ -26,7 +26,7 @@ RUN npm test
 # ------------------------------------------------------------------------------
 # Stage 2: Production Image
 # ------------------------------------------------------------------------------
-FROM node:18-alpine AS production
+FROM node:alpine AS production
 
 WORKDIR /app
 
